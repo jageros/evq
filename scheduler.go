@@ -2,7 +2,6 @@ package evq
 
 import (
 	"fmt"
-	//"github.com/jageros/plog"
 	"gopkg.in/eapache/queue.v1"
 	"log"
 	"strconv"
@@ -10,18 +9,12 @@ import (
 	"time"
 )
 
-/*
-func GoID() int {
-	var buf [64]byte
-	n := runtime.Stack(buf[:], false)
-	idField := strings.Fields(strings.TrimPrefix(string(buf[:n]), "goroutine "))[0]
-	id, err := strconv.Atoi(idField)
-	if err != nil {
-		panic(fmt.Sprintf("cannot get goroutine id: %v", err))
-	}
-	return id
-}
-*/
+const (
+	COROUTINE_EVENT = 1 + iota
+	CALLATER_EVT
+	TIMER_EVENT
+	ClOSE_EVQ_EVT
+)
 
 var mainEvScheduler = &eventScheduler{
 	eventHandlers: make(map[int][]*handler),
@@ -398,9 +391,9 @@ func (es *eventScheduler) waitClear() {
 	}
 }
 
-func Start() {
-	mainEvScheduler.start()
-}
+//func Start() {
+//	mainEvScheduler.start()
+//}
 
 func Stop() {
 	mainEvScheduler.stop()
@@ -422,4 +415,16 @@ func Await(f func()) {
 func CallLater(f func()) {
 	ev := newCallLaterEvent(f)
 	mainEvScheduler.postEvent(ev)
+}
+
+func catchPanic(f func()) (err interface{}) {
+	defer func() {
+		err = recover()
+		if err != nil {
+			log.Printf("CatchPanic err: %v", err)
+		}
+	}()
+
+	f()
+	return
 }
