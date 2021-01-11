@@ -1,4 +1,4 @@
-module evq
+module github.com/jageros/evq
 
 go 1.15
 
