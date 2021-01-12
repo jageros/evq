@@ -10,11 +10,22 @@ import (
 )
 
 const (
-	COROUTINE_EVENT = 1 + iota
-	CALLATER_EVT
-	TIMER_EVENT
-	ClOSE_EVQ_EVT
+	COROUTINE_EVENT = 1
+	CALLATER_EVT    = 2
+	ClOSE_EVQ_EVT   = 3
 )
+
+var (
+	lastEventID = 10
+	mx          = &sync.Mutex{}
+)
+
+func CreateEventID() int {
+	mx.Lock()
+	defer mx.Unlock()
+	lastEventID++
+	return lastEventID
+}
 
 var mainEvScheduler = &eventScheduler{
 	eventHandlers: make(map[int][]*handler),
@@ -391,13 +402,8 @@ func (es *eventScheduler) waitClear() {
 	}
 }
 
-//func Start() {
-//	mainEvScheduler.start()
-//}
-
 func Stop() {
 	mainEvScheduler.stop()
-	//mainEvScheduler.waitClear()
 }
 
 func PostEvent(ev IEvent) {
@@ -424,7 +430,6 @@ func catchPanic(f func()) (err interface{}) {
 			log.Printf("CatchPanic err: %v", err)
 		}
 	}()
-
 	f()
 	return
 }
