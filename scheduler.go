@@ -36,11 +36,13 @@ var mainEvScheduler = &eventScheduler{
 }
 
 func Initialize(g *group.Group) {
-	mainEvScheduler.start()
-	g.Go(func(ctx context.Context) error {
-		<-ctx.Done()
-		mainEvScheduler.stop()
-		return nil
+	mainEvScheduler.initOnce.Do(func() {
+		mainEvScheduler.start()
+		g.Go(func(ctx context.Context) error {
+			<-ctx.Done()
+			mainEvScheduler.stop()
+			return nil
+		})
 	})
 }
 
@@ -206,6 +208,7 @@ type eventScheduler struct {
 	eventMap      map[uint64]*handler
 	maxHid        uint64
 	exitSignal    chan struct{}
+	initOnce      sync.Once
 }
 
 func (es *eventScheduler) String() string {
