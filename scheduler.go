@@ -1,11 +1,14 @@
 package evq
 
 import (
+	"context"
 	"fmt"
 	"gopkg.in/eapache/queue.v1"
 	"log"
+	"os/signal"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -34,7 +37,12 @@ var mainEvScheduler = &eventScheduler{
 }
 
 func init() {
+	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	mainEvScheduler.start()
+	go func() {
+		<-ctx.Done()
+		mainEvScheduler.stop()
+	}()
 }
 
 type IEvent interface {
@@ -402,9 +410,9 @@ func (es *eventScheduler) waitClear() {
 	}
 }
 
-func Stop() {
-	mainEvScheduler.stop()
-}
+//func Stop() {
+//	mainEvScheduler.stop()
+//}
 
 func PostEvent(ev IEvent) {
 	mainEvScheduler.postEvent(ev)
