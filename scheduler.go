@@ -3,12 +3,11 @@ package evq
 import (
 	"context"
 	"fmt"
+	"github.com/jageros/group"
 	"gopkg.in/eapache/queue.v1"
 	"log"
-	"os/signal"
 	"strconv"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -36,13 +35,13 @@ var mainEvScheduler = &eventScheduler{
 	maxCoCount:    10000,
 }
 
-func init() {
-	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+func Initialize(g *group.Group) {
 	mainEvScheduler.start()
-	go func() {
+	g.Go(func(ctx context.Context) error {
 		<-ctx.Done()
 		mainEvScheduler.stop()
-	}()
+		return nil
+	})
 }
 
 type IEvent interface {
